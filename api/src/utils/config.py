@@ -5,10 +5,14 @@ class Settings:
     """Application settings"""
     
     # MongoDB
-    MONGODB_URI: str = os.getenv(
-        "MONGODB_URI",
-        "mongodb+srv://siddharth8shukla8_db_user:yfoCPLgF1YcVV6zW@petsandpaws.0jus2qw.mongodb.net/?appName=PetsAndPaws"
-    )
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
+    
+    if not MONGODB_URI:
+        raise ValueError(
+            "MONGODB_URI environment variable is not set. "
+            "Please set it in your .env file."
+        )
+    
     DATABASE_NAME: str = "pets_paws_db"
     
     # API

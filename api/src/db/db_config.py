@@ -3,11 +3,14 @@ from pymongo.server_api import ServerApi
 from pymongo.database import Database
 import os
 
-# MongoDB connection string
-MONGODB_URI = os.getenv(
-    "MONGODB_URI",
-    "mongodb+srv://siddharth8shukla8_db_user:yfoCPLgF1YcVV6zW@petsandpaws.0jus2qw.mongodb.net/?appName=PetsAndPaws"
-)
+# MongoDB connection string - now reads from environment variable only
+MONGDB_URI = os.getenv("MONGODB_URI")
+
+if not MONGODB_URI:
+    raise ValueError(
+        "MONGODB_URI environment variable is not set. "
+        "Please set it in your .env file or environment."
+    )
 
 # Database name
 DATABASE_NAME = "pets_paws_db"
