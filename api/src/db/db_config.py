@@ -2,9 +2,12 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.database import Database
 import os
+from dotenv import load_dotenv
 
-# MongoDB connection string - now reads from environment variable only
-MONGDB_URI = os.getenv("MONGODB_URI")
+# Load environment variables from .env file
+load_dotenv()
+
+MONGODB_URI = os.getenv("MONGODB_URI")
 
 if not MONGODB_URI:
     raise ValueError(

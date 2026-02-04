@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { mockPets, Pet } from '@/lib/mock-pets';
-import { getAddedPets } from '@/lib/pet-storage';
 import Navbar from '@/components/navbar';
 import Filters, { FilterState } from '@/components/filters';
 import PetCard from '@/components/pet-card';
 import EmptyState from '@/components/empty-state';
 import { ArrowRight } from 'lucide-react';
+import { api, Pet } from '@/lib/api';
 
 export default function Home() {
   const [filters, setFilters] = useState<FilterState>({
@@ -15,22 +14,33 @@ export default function Home() {
     age: 'All',
     location: ''
   });
-  const [allPets, setAllPets] = useState<Pet[]>(mockPets);
+  const [allPets, setAllPets] = useState<Pet[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load added pets on mount
+  // Fetch pets from API
   useEffect(() => {
-    const addedPets = getAddedPets();
-    setAllPets([...mockPets, ...addedPets]);
-  }, []);
+    async function fetchPets() {
+      try {
+        setLoading(true);
+        const response = await api.getPets({
+          type: filters.type !== 'All' ? filters.type : undefined,
+          location: filters.location || undefined,
+          limit: 100,
+        });
+        setAllPets(response.pets);
+      } catch (error) {
+        console.error('Failed to fetch pets:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  // Filter pets
+    fetchPets();
+  }, [filters.type, filters.location]);
+
+  // Filter pets by age on client-side
   const filteredPets = useMemo(() => {
     return allPets.filter((pet) => {
-      // Type filter
-      if (filters.type !== 'All' && pet.type !== filters.type) {
-        return false;
-      }
-
       // Age filter
       if (filters.age !== 'All') {
         const age = pet.age;
@@ -47,16 +57,9 @@ export default function Home() {
         }
       }
 
-      // Location filter (case-insensitive partial match)
-      if (filters.location) {
-        if (!pet.location.toLowerCase().includes(filters.location.toLowerCase())) {
-          return false;
-        }
-      }
-
       return true;
     });
-  }, [allPets, filters]);
+  }, [allPets, filters.age]);
 
   const handleClearFilters = () => {
     setFilters({ type: 'All', age: 'All', location: '' });
@@ -111,10 +114,14 @@ export default function Home() {
 
             {/* Pet Grid */}
             <div className="lg:col-span-3">
-              {filteredPets.length > 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-16">
+                  <p className="text-muted-foreground">Loading pets...</p>
+                </div>
+              ) : filteredPets.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredPets.map((pet) => (
-                    <PetCard key={pet.id} pet={pet} />
+                    <PetCard key={pet._id} pet={pet} />
                   ))}
                 </div>
               ) : (

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db.db_config import init_db, test_connection
-from routes import auth, ngo, pets
+from .db.db_config import init_db, test_connection
+from .routes import auth, ngo, pets
 
 app = FastAPI(title="Pets & Paws API")
 

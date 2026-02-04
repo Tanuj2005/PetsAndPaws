@@ -3,9 +3,9 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
-from db.db_config import get_database
-from db.models import PetRequest, PetResponse
-from routes.auth import get_current_user
+from ..db.db_config import get_database
+from ..db.models import PetRequest, PetResponse
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api/pets", tags=["Pets"])
 

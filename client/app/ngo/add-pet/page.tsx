@@ -4,16 +4,16 @@ import React from "react"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { addPet } from '@/lib/pet-storage';
-import { Pet } from '@/lib/mock-pets';
 import Navbar from '@/components/navbar';
 import { ArrowLeft, Check } from 'lucide-react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 export default function AddPetPage() {
   const router = useRouter();
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'Dog' as 'Dog' | 'Cat',
@@ -38,6 +38,7 @@ export default function AddPetPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     // Validate required fields
     if (!formData.name || !formData.age || !formData.location || !formData.imageUrl) {
@@ -46,30 +47,30 @@ export default function AddPetPage() {
       return;
     }
 
-    // Create new pet object
-    const newPet: Pet = {
-      id: `ngo-${Date.now()}`,
-      name: formData.name,
-      type: formData.type,
-      age: parseInt(formData.age),
-      location: formData.location,
-      imageUrl: formData.imageUrl,
-      vaccinated: formData.vaccinated,
-      neutered: formData.neutered,
-      medicalNotes: formData.medicalNotes
-    };
+    try {
+      await api.createPet({
+        name: formData.name,
+        type: formData.type,
+        age: parseInt(formData.age),
+        location: formData.location,
+        image_url: formData.imageUrl,
+        vaccinated: formData.vaccinated,
+        neutered: formData.neutered,
+        medical_notes: formData.medicalNotes || undefined,
+      });
 
-    // Add to localStorage
-    addPet(newPet);
+      // Show success message
+      setShowSuccess(true);
 
-    // Show success message
-    setShowSuccess(true);
-    setLoading(false);
-
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/');
-    }, 2000);
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add pet');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -97,6 +98,13 @@ export default function AddPetPage() {
             </div>
           )}
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           {/* Form Card */}
           <div className="bg-card border border-border rounded-lg shadow-sm p-6 md:p-8">
             <div className="mb-8">
@@ -120,6 +128,7 @@ export default function AddPetPage() {
                   placeholder="e.g. Max"
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -134,6 +143,7 @@ export default function AddPetPage() {
                     value={formData.type}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    disabled={loading}
                   >
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
@@ -152,6 +162,7 @@ export default function AddPetPage() {
                     min="0"
                     className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -169,6 +180,7 @@ export default function AddPetPage() {
                   placeholder="e.g. San Francisco, CA"
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -185,6 +197,7 @@ export default function AddPetPage() {
                   placeholder="https://example.com/photo.jpg"
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
                 {formData.imageUrl && (
                   <div className="mt-2">
@@ -213,6 +226,7 @@ export default function AddPetPage() {
                       checked={formData.vaccinated}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-primary rounded"
+                      disabled={loading}
                     />
                     <span className="text-sm text-foreground">Vaccinated</span>
                   </label>
@@ -225,6 +239,7 @@ export default function AddPetPage() {
                       checked={formData.neutered}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-primary rounded"
+                      disabled={loading}
                     />
                     <span className="text-sm text-foreground">Neutered/Spayed</span>
                   </label>
@@ -243,6 +258,7 @@ export default function AddPetPage() {
                   placeholder="Any additional health or behavioral information..."
                   rows={4}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  disabled={loading}
                 />
               </div>
 
