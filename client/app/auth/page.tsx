@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heart, Building2, Users } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export default function AuthPage() {
   const router = useRouter();
   const [userType, setUserType] = useState<'adopter' | 'ngo'>('adopter');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -66,17 +68,41 @@ export default function AuthPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
-    if (isSignUp) {
-      router.push(`/dashboard?userType=${userType}`);
-    } else {
-      router.push(`/dashboard?userType=${userType}`);
+    setLoading(true);
+    setErrors({});
+
+    try {
+      if (isSignUp) {
+        const name = userType === 'adopter' ? formData.name : formData.organizationName;
+        const result = await api.signup({
+          email: formData.email,
+          password: formData.password,
+          name,
+          user_type: userType === 'adopter' ? 'Adopter' : 'NGO',
+        });
+        
+        router.push(result.redirect_url);
+      } else {
+        const result = await api.login({
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        router.push(result.redirect_url);
+      }
+    } catch (error) {
+      setErrors({
+        submit: error instanceof Error ? error.message : 'An error occurred',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -187,6 +213,13 @@ export default function AuthPage() {
                   </p>
                 </div>
 
+                {/* Error Message */}
+                {errors.submit && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-sm text-destructive">{errors.submit}</p>
+                  </div>
+                )}
+
                 {/* Email Field */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -197,7 +230,7 @@ export default function AuthPage() {
                     placeholder="you@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    disabled={false}
+                    disabled={loading}
                     className={errors.email ? 'border-destructive' : ''}
                   />
                   {errors.email && (
@@ -216,6 +249,7 @@ export default function AuthPage() {
                       placeholder="John Doe"
                       value={formData.name}
                       onChange={handleInputChange}
+                      disabled={loading}
                       className={errors.name ? 'border-destructive' : ''}
                     />
                     {errors.name && (
@@ -235,6 +269,7 @@ export default function AuthPage() {
                       placeholder="Your NGO Name"
                       value={formData.organizationName}
                       onChange={handleInputChange}
+                      disabled={loading}
                       className={errors.organizationName ? 'border-destructive' : ''}
                     />
                     {errors.organizationName && (
@@ -253,6 +288,7 @@ export default function AuthPage() {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
+                    disabled={loading}
                     className={errors.password ? 'border-destructive' : ''}
                   />
                   {errors.password && (
@@ -271,6 +307,7 @@ export default function AuthPage() {
                       placeholder="••••••••"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
+                      disabled={loading}
                       className={errors.confirmPassword ? 'border-destructive' : ''}
                     />
                     {errors.confirmPassword && (
@@ -284,8 +321,9 @@ export default function AuthPage() {
                   type="submit"
                   className="w-full"
                   size="lg"
+                  disabled={loading}
                 >
-                  {isSignUp ? 'Create Account' : 'Sign In'}
+                  {loading ? 'Loading...' : (isSignUp ? 'Create Account' : 'Sign In')}
                 </Button>
 
                 {/* Forgot Password Link (Login Only) */}
@@ -311,7 +349,8 @@ export default function AuthPage() {
                         setFormData({ email: '', password: '', confirmPassword: '', name: '', organizationName: '' });
                         setErrors({});
                       }}
-                      className="ml-2 text-primary font-semibold hover:text-primary/80 transition-colors"
+                      disabled={loading}
+                      className="ml-2 text-primary font-semibold hover:text-primary/80 transition-colors disabled:opacity-50"
                     >
                       {isSignUp ? 'Sign In' : 'Sign Up'}
                     </button>

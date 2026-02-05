@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 
-from db.db_config import get_database
-from routes.auth import get_current_user
+from ..db.db_config import get_database
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api/ngo", tags=["NGO"])
 

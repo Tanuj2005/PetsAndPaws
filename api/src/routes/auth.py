@@ -3,9 +3,9 @@ from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
-from db.db_config import get_database
-from db.models import SignupRequest, LoginRequest, AuthResponse, UserResponse
-from utils.security import hash_password, create_session
+from ..db.db_config import get_database
+from ..db.models import SignupRequest, LoginRequest, AuthResponse, UserResponse
+from ..utils.security import hash_password, create_session
 
 router = APIRouter(prefix="/api", tags=["Authentication"])
 

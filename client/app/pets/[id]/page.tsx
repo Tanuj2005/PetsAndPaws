@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { mockPets, Pet } from '@/lib/mock-pets';
-import { getAddedPets } from '@/lib/pet-storage';
 import Navbar from '@/components/navbar';
 import Badge from '@/components/badge';
 import { ArrowLeft, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { api, Pet } from '@/lib/api';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -17,6 +16,7 @@ export default function PetDetailsPage({ params }: PageProps) {
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
   const [id, setId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     params.then((p) => setId(p.id));
@@ -25,10 +25,19 @@ export default function PetDetailsPage({ params }: PageProps) {
   useEffect(() => {
     if (!id) return;
 
-    const allPets = [...mockPets, ...getAddedPets()];
-    const found = allPets.find((p) => p.id === id);
-    setPet(found || null);
-    setLoading(false);
+    async function fetchPet() {
+      try {
+        setLoading(true);
+        const petData = await api.getPetById(id);
+        setPet(petData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load pet');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPet();
   }, [id]);
 
   if (loading) {
@@ -53,7 +62,7 @@ export default function PetDetailsPage({ params }: PageProps) {
             <div className="text-center">
               <h1 className="text-2xl font-bold text-foreground mb-4">Pet Not Found</h1>
               <p className="text-muted-foreground mb-6">
-                The pet you're looking for doesn't exist or has been removed.
+                {error || "The pet you're looking for doesn't exist or has been removed."}
               </p>
               <Link
                 href="/"
@@ -89,7 +98,7 @@ export default function PetDetailsPage({ params }: PageProps) {
               <div>
                 <div className="relative w-full h-96 bg-muted rounded-lg overflow-hidden">
                   <Image
-                    src={pet.imageUrl || "/placeholder.svg"}
+                    src={pet.image_url || "/placeholder.svg"}
                     alt={pet.name}
                     fill
                     className="object-cover"
@@ -161,10 +170,10 @@ export default function PetDetailsPage({ params }: PageProps) {
                 </div>
 
                 {/* Medical Notes */}
-                {pet.medicalNotes && (
+                {pet.medical_notes && (
                   <div className="bg-muted/50 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground mb-2">Medical Notes</p>
-                    <p className="text-foreground">{pet.medicalNotes}</p>
+                    <p className="text-foreground">{pet.medical_notes}</p>
                   </div>
                 )}
 

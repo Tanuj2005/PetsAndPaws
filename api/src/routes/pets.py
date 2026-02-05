@@ -1,37 +1,52 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
-from db.db_config import get_database
-from db.models import PetRequest, PetResponse
-from routes.auth import get_current_user
+from ..db.db_config import get_database
+from ..db.models import PetRequest, PetResponse
+from .auth import get_current_user
+from ..utils.cloudinary_upload import upload_image_to_cloudinary
 
 router = APIRouter(prefix="/api/pets", tags=["Pets"])
 
 @router.post("", response_model=PetResponse)
 async def create_pet(
-    pet: PetRequest,
+    name: str = Form(...),
+    type: str = Form(...),
+    age: int = Form(...),
+    location: str = Form(...),
+    vaccinated: bool = Form(...),
+    neutered: bool = Form(...),
+    medical_notes: Optional[str] = Form(None),
+    image: UploadFile = File(...),
     current_user = Depends(get_current_user)
 ):
-    """Create a new pet listing (NGO only)"""
+    """Create a new pet listing (NGO only) with image upload"""
     # Verify user is an NGO
     if current_user["user_type"] != "NGO":
         raise HTTPException(status_code=403, detail="Only NGOs can add pets")
+    
+    # Validate pet type
+    if type not in ["Dog", "Cat"]:
+        raise HTTPException(status_code=400, detail="Pet type must be 'Dog' or 'Cat'")
+    
+    # Upload image to Cloudinary
+    image_url = await upload_image_to_cloudinary(image, folder="pets_paws/pets")
     
     db = get_database()
     
     # Create pet document
     pet_doc = {
         "ngo_user_id": current_user["id"],
-        "name": pet.name,
-        "type": pet.type,
-        "age": pet.age,
-        "location": pet.location,
-        "image_url": pet.image_url,
-        "vaccinated": pet.vaccinated,
-        "neutered": pet.neutered,
-        "medical_notes": pet.medical_notes,
+        "name": name,
+        "type": type,
+        "age": age,
+        "location": location,
+        "image_url": image_url,
+        "vaccinated": vaccinated,
+        "neutered": neutered,
+        "medical_notes": medical_notes,
         "created_at": datetime.utcnow()
     }
     
@@ -40,14 +55,14 @@ async def create_pet(
     return PetResponse(
         id=str(result.inserted_id),
         ngo_user_id=current_user["id"],
-        name=pet.name,
-        type=pet.type,
-        age=pet.age,
-        location=pet.location,
-        image_url=pet.image_url,
-        vaccinated=pet.vaccinated,
-        neutered=pet.neutered,
-        medical_notes=pet.medical_notes,
+        name=name,
+        type=type,
+        age=age,
+        location=location,
+        image_url=image_url,
+        vaccinated=vaccinated,
+        neutered=neutered,
+        medical_notes=medical_notes,
         created_at=pet_doc["created_at"].isoformat()
     )
 

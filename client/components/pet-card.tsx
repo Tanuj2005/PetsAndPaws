@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Pet } from '@/lib/mock-pets';
+import { Pet } from '@/lib/api';
 import Badge from './badge';
 import { MapPin, Calendar } from 'lucide-react';
 
@@ -12,17 +12,17 @@ interface PetCardProps {
 
 export default function PetCard({ pet }: PetCardProps) {
   return (
-    <Link href={`/pets/${pet.id}`}>
+    <Link href={`/pets/${pet._id}`}>
       <div className="bg-card rounded-lg overflow-hidden border border-border shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer h-full flex flex-col">
         {/* Image */}
         <div className="relative w-full h-48 bg-muted overflow-hidden">
-          {/* <Image
-            src={pet.imageUrl || "/placeholder.svg"}
+          <Image
+            src={pet.image_url || "/placeholder.svg"}
             alt={pet.name}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          /> */}
+          />
         </div>
 
         {/* Content */}

@@ -4,72 +4,106 @@ import React from "react"
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { addPet } from '@/lib/pet-storage';
-import { Pet } from '@/lib/mock-pets';
 import Navbar from '@/components/navbar';
 import { ArrowLeft, Check } from 'lucide-react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 export default function AddPetPage() {
   const router = useRouter();
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'Dog' as 'Dog' | 'Cat',
     age: '',
     location: '',
-    imageUrl: '',
     vaccinated: true,
     neutered: true,
     medicalNotes: ''
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value, type } = e.currentTarget;
+    const target = e.currentTarget;
+    const { name, value } = target;
+    
+    // Check if it's a checkbox input
+    const isCheckbox = target instanceof HTMLInputElement && target.type === 'checkbox';
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.currentTarget as HTMLInputElement).checked : value
+      [name]: isCheckbox ? target.checked : value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, or WebP)');
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setImageFile(file);
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     // Validate required fields
-    if (!formData.name || !formData.age || !formData.location || !formData.imageUrl) {
-      alert('Please fill in all required fields');
+    if (!formData.name || !formData.age || !formData.location || !imageFile) {
+      alert('Please fill in all required fields including the pet image');
       setLoading(false);
       return;
     }
 
-    // Create new pet object
-    const newPet: Pet = {
-      id: `ngo-${Date.now()}`,
-      name: formData.name,
-      type: formData.type,
-      age: parseInt(formData.age),
-      location: formData.location,
-      imageUrl: formData.imageUrl,
-      vaccinated: formData.vaccinated,
-      neutered: formData.neutered,
-      medicalNotes: formData.medicalNotes
-    };
+    try {
+      await api.createPet({
+        name: formData.name,
+        type: formData.type,
+        age: parseInt(formData.age),
+        location: formData.location,
+        image: imageFile,
+        vaccinated: formData.vaccinated,
+        neutered: formData.neutered,
+        medical_notes: formData.medicalNotes || undefined,
+      });
 
-    // Add to localStorage
-    addPet(newPet);
+      // Show success message
+      setShowSuccess(true);
 
-    // Show success message
-    setShowSuccess(true);
-    setLoading(false);
-
-    // Redirect after 2 seconds
-    setTimeout(() => {
-      router.push('/');
-    }, 2000);
+      // Redirect after 2 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add pet');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -97,6 +131,13 @@ export default function AddPetPage() {
             </div>
           )}
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
           {/* Form Card */}
           <div className="bg-card border border-border rounded-lg shadow-sm p-6 md:p-8">
             <div className="mb-8">
@@ -120,6 +161,7 @@ export default function AddPetPage() {
                   placeholder="e.g. Max"
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -134,6 +176,7 @@ export default function AddPetPage() {
                     value={formData.type}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    disabled={loading}
                   >
                     <option value="Dog">Dog</option>
                     <option value="Cat">Cat</option>
@@ -152,6 +195,7 @@ export default function AddPetPage() {
                     min="0"
                     className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -169,32 +213,32 @@ export default function AddPetPage() {
                   placeholder="e.g. San Francisco, CA"
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
               </div>
 
-              {/* Photo URL */}
+              {/* Photo Upload */}
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-2">
-                  Photo URL <span className="text-accent">*</span>
+                  Upload Pet Photo <span className="text-accent">*</span>
                 </label>
                 <input
-                  type="url"
-                  name="imageUrl"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/photo.jpg"
-                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
+                  disabled={loading}
                 />
-                {formData.imageUrl && (
-                  <div className="mt-2">
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Accepted formats: JPEG, PNG, WebP. Max size: 10MB
+                </p>
+                {imagePreview && (
+                  <div className="mt-3">
                     <img
-                      src={formData.imageUrl || "/placeholder.svg"}
+                      src={imagePreview}
                       alt="Preview"
-                      className="w-24 h-24 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://via.placeholder.com/100?text=Invalid+Image';
-                      }}
+                      className="w-32 h-32 object-cover rounded-lg border-2 border-border"
                     />
                   </div>
                 )}
@@ -213,6 +257,7 @@ export default function AddPetPage() {
                       checked={formData.vaccinated}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-primary rounded"
+                      disabled={loading}
                     />
                     <span className="text-sm text-foreground">Vaccinated</span>
                   </label>
@@ -225,6 +270,7 @@ export default function AddPetPage() {
                       checked={formData.neutered}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-primary rounded"
+                      disabled={loading}
                     />
                     <span className="text-sm text-foreground">Neutered/Spayed</span>
                   </label>
@@ -243,6 +289,7 @@ export default function AddPetPage() {
                   placeholder="Any additional health or behavioral information..."
                   rows={4}
                   className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  disabled={loading}
                 />
               </div>
 

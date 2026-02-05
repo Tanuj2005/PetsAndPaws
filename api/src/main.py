@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
-from db.db_config import init_db, test_connection
-from routes import auth, ngo, pets
+# Load environment variables from .env file
+load_dotenv()
+
+from .db.db_config import init_db, test_connection
+from .routes import auth, ngo, pets
 
 app = FastAPI(title="Pets & Paws API")
 

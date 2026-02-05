@@ -1,7 +1,7 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from db.db_config import get_database
+from ..db.db_config import get_database
 
 def hash_password(password: str) -> str:
     """Hash password using SHA-256"""
