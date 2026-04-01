@@ -9,13 +9,13 @@ import { ArrowLeft, MapPin, Calendar, CheckCircle, AlertCircle } from 'lucide-re
 import { api, Pet } from '@/lib/api';
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default function PetDetailsPage({ params }: PageProps) {
+  const { id } = params;
   const [pet, setPet] = useState<Pet | null>(null);
   const [loading, setLoading] = useState(true);
-  const [id, setId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<{ name: string; email: string; user_type: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -31,16 +31,13 @@ export default function PetDetailsPage({ params }: PageProps) {
   });
 
   useEffect(() => {
-    params.then((p) => setId(p.id));
-  }, [params]);
-
-  useEffect(() => {
+    console.log('Pet ID from params:', id);
     if (!id) return;
 
     async function fetchPet() {
       try {
         setLoading(true);
-        const petData = await api.getPetById(id!);
+        const petData = await api.getPetById(id);
         setPet(petData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load pet');
