@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from .db.db_config import init_db, test_connection
-from .routes import auth, ngo, pets, adoption, faq
+from .routes import auth, ngo, pets, adoption
 
 app = FastAPI(title="Pets & Paws API")
 
@@ -39,7 +39,6 @@ app.include_router(auth.router)
 app.include_router(ngo.router)
 app.include_router(pets.router)
 app.include_router(adoption.router)
-app.include_router(faq.router)
 
 if __name__ == "__main__":
     import uvicorn

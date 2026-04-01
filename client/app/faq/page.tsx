@@ -1,74 +1,45 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/navbar';
 import { Card } from '@/components/ui/card';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import { api, FAQ } from '@/lib/api';
+
+const staticFaqs = [
+  {
+    id: "faq-1",
+    question: "How does the pet adoption process work?",
+    answer: "The process is simple: browse our available pets, click on a pet you're interested in, and fill out the adoption request form. The NGO or shelter caring for the pet will review your application and get in touch with you."
+  },
+  {
+    id: "faq-2",
+    question: "Is there an adoption fee?",
+    answer: "Adoption fees vary depending on the NGO or shelter. The fee usually covers vaccinations, spaying/neutering, microchipping, and general care provided before adoption."
+  },
+  {
+    id: "faq-3",
+    question: "What are the requirements for adopting a pet?",
+    answer: "Basic requirements include being at least 18 years old, having a stable living situation, and demonstrating the ability to provide a safe, loving home. Some NGOs might have additional specific requirements."
+  },
+  {
+    id: "faq-4",
+    question: "Can I return an adopted pet if it's not a good fit?",
+    answer: "Yes, most NGOs require that you return the pet to them if things don't work out. We recommend a trial period and encourage open communication with the NGO to ensure a successful adoption."
+  },
+  {
+    id: "faq-5",
+    question: "Are the pets vaccinated and neutered?",
+    answer: "Yes, you can see the vaccination and neuter status on each pet's profile. We encourage NGOs to ensure pets are healthy, vaccinated, and spayed/neutered before listing them for adoption."
+  }
+];
 
 export default function FAQPage() {
-  const [faqs, setFaqs] = useState<FAQ[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [faqs] = useState(staticFaqs);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
-  const fetchFAQs = async () => {
-    try {
-      setLoading(true);
-      const faqData = await api.getFAQs();
-      setFaqs(faqData);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load FAQs');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const toggleAccordion = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading FAQs...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <HelpCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading FAQs</h2>
-              <p className="text-red-600">{error}</p>
-              <button
-                onClick={fetchFAQs}
-                className="mt-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

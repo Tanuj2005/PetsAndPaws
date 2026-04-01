@@ -42,27 +42,6 @@ export default function Navbar() {
     router.push('/');
   };
 
-  const handleHomeClick = () => {
-    // Determine home page based on current route context
-    const isNgoContext = pathname.startsWith('/ngo');
-    const homeHref = isNgoContext ? '/ngo' : '/';
-
-    // Check if already on home page
-    const isAlreadyHome = isNgoContext ? pathname === '/ngo' : pathname === '/';
-
-    if (isAlreadyHome) {
-      // Smoothly scroll to top if already on home page
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Navigate to correct home page
-      router.push(homeHref);
-      // Scroll to top after navigation
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' });
-      }, 0);
-    }
-  };
-
   return (
     <nav className="sticky top-0 z-40 bg-background border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,87 +54,111 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="flex items-center gap-8">
-            <button
-              onClick={handleHomeClick}
-              className="text-foreground hover:text-primary transition-colors text-sm font-medium cursor-pointer"
-            >
-              Home
-            </button>
+            {user && user.user_type === 'NGO' && (
+              <>
+                {pathname === '/ngo' ? (
+                  <Link
+                    href="/"
+                    className="text-base font-medium transition-colors cursor-pointer text-foreground hover:text-primary"
+                  >
+                    Listing
+                  </Link>
+                ) : (
+                  <Link
+                    href="/ngo"
+                    className="text-base font-medium transition-colors cursor-pointer text-foreground hover:text-primary"
+                  >
+                    Dashboard
+                  </Link>
+                )}
+              </>
+            )}
             
-            {user && (
-              <Link
-                href="/my-requests"
-                className={`text-sm font-medium transition-colors cursor-pointer ${
-                  pathname === '/my-requests'
-                    ? 'text-primary'
-                    : 'text-foreground hover:text-primary'
-                }`}
-              >
-                My Requests
-              </Link>
+            {user && user.user_type !== 'NGO' && (
+              <>
+                {pathname === '/my-requests' || pathname === '/guide' || pathname === '/faq' || pathname === '/care-guide' ? (
+                  <Link
+                    href="/"
+                    className="text-base font-medium transition-colors cursor-pointer text-foreground hover:text-primary"
+                  >
+                    Listing
+                  </Link>
+                ) : (
+                  <Link
+                    href="/my-requests"
+                    className="text-base font-medium transition-colors cursor-pointer text-foreground hover:text-primary"
+                  >
+                    My Requests
+                  </Link>
+                )}
+              </>
             )}
 
             {/* Help Dropdown */}
-            <div className="relative help-dropdown">
-              <button
-                onClick={() => setHelpDropdownOpen(!helpDropdownOpen)}
-                className="flex items-center gap-1 text-foreground hover:text-primary transition-colors text-sm font-medium cursor-pointer"
-              >
-                <HelpCircle className="h-4 w-4" />
-                Help
-                <ChevronDown className="h-3 w-3" />
-              </button>
+            {user && user.user_type !== 'NGO' && (
+              <div className="relative help-dropdown">
+                <button
+                  onClick={() => setHelpDropdownOpen(!helpDropdownOpen)}
+                  className="flex items-center gap-1 text-foreground hover:text-primary transition-colors text-base font-medium cursor-pointer"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  Help
+                  <ChevronDown className="h-3 w-3" />
+                </button>
 
-              {helpDropdownOpen && (
-                <div className="absolute top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <Link
-                    href="/guide"
-                    onClick={() => setHelpDropdownOpen(false)}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                      pathname === '/guide' ? 'text-primary bg-blue-50' : 'text-gray-700'
-                    }`}
-                  >
-                    Adoption Guide
-                  </Link>
-                  <Link
-                    href="/faq"
-                    onClick={() => setHelpDropdownOpen(false)}
-                    className={`block px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                      pathname === '/faq' ? 'text-primary bg-blue-50' : 'text-gray-700'
-                    }`}
-                  >
-                    FAQ
-                  </Link>
-                </div>
-              )}
-            </div>
+                {helpDropdownOpen && (
+                  <div className="absolute top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                    <Link
+                      href="/guide"
+                      onClick={() => setHelpDropdownOpen(false)}
+                      className={`block px-4 py-2 text-base hover:bg-gray-50 transition-colors ${
+                        pathname === '/guide' ? 'text-primary bg-blue-50' : 'text-gray-700'
+                      }`}
+                    >
+                      Adoption Guide
+                    </Link>
+                    <Link
+                      href="/faq"
+                      onClick={() => setHelpDropdownOpen(false)}
+                      className={`block px-4 py-2 text-base hover:bg-gray-50 transition-colors ${
+                        pathname === '/faq' ? 'text-primary bg-blue-50' : 'text-gray-700'
+                      }`}
+                    >
+                      FAQ
+                    </Link>
+                    <Link
+                      href="/care-guide"
+                      onClick={() => setHelpDropdownOpen(false)}
+                      className={`block px-4 py-2 text-base hover:bg-gray-50 transition-colors ${
+                        pathname === '/care-guide' ? 'text-primary bg-blue-50' : 'text-gray-700'
+                      }`}
+                    >
+                      Care Guide
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
             
             {/* Auth Buttons */}
             {loading ? null : user ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-base text-muted-foreground">
                   {user.name}
                 </span>
-                {user.user_type === 'NGO' && (
-                  <Link href="/ngo/add-pet">
-                    <Button variant="outline" size="sm">
-                      Add Pet
-                    </Button>
-                  </Link>
-                )}
-                <Button variant="outline" size="sm" onClick={handleLogout}>
+                <Button variant="outline" onClick={handleLogout}>
                   Logout
                 </Button>
               </div>
             ) : (
               <div className="flex items-center gap-4">
                 <Link href="/auth">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/auth">
-                  <Button size="sm">
+                  <Button>
                     Sign Up
                   </Button>
                 </Link>

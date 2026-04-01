@@ -68,12 +68,6 @@ interface UserAdoptionRequestsResponse {
   total: number;
 }
 
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-}
-
 interface NgoDashboardResponse {
   user: {
     id: string;
@@ -329,17 +323,7 @@ class ApiService {
 
     return response.json();
   }
-
-  async getFAQs(): Promise<FAQ[]> {
-    const response = await fetch(`${API_BASE_URL}/api/faqs`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch FAQs');
-    }
-
-    return response.json();
-  }
 }
 
 export const api = new ApiService();
-export type { Pet, AuthResponse, PetsResponse, AdoptionRequest, NgoDashboardResponse, UserAdoptionRequestsResponse, FAQ };
+export type { Pet, AuthResponse, PetsResponse, AdoptionRequest, NgoDashboardResponse, UserAdoptionRequestsResponse };

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar';
 import { Card } from '@/components/ui/card';
 import Badge from '@/components/badge';
@@ -34,14 +35,24 @@ const statusConfig = {
 };
 
 export default function MyAdoptionRequestsPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<AdoptionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check user type and redirect NGO users
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user.user_type === 'NGO') {
+        router.push('/ngo');
+        return;
+      }
+    }
     fetchRequests();
-  }, []);
+  }, [router]);
 
   const fetchRequests = async () => {
     try {
